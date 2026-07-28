@@ -24,18 +24,19 @@ Review fixes and bug fixes land as `git commit --fixup=<sha>` against the origin
 
 ## Status
 
-**Project state:** Planning complete + pre-investigated (2026-07-27). All decisions locked; library API verified against `astronomy.d.ts`. Repo `git init`'d, no code yet, no remote.
+**Project state:** Phase 1 done (2026-07-28). Vite 8 + TS 6 + Vitest scaffolded, `astronomy-engine` installed, blank dark SVG scene renders, module skeleton in place. 1 commit local (`ec6a1df`), not pushed, no remote yet.
 
-**Current session focus:** planning (grilling + pre-investigation done)
+**Current session focus:** Phase 1 complete — scaffold + blank scene committed.
 
-**Next session focus:** Start implementation at Phase 1 (scaffold Vite + TS). No blocking unknowns remain.
+**Next session focus:** Phase 2 — implement `astro/positions.ts` (`getHeliocentricPositions`, `sampleOrbit`) via `Ecliptic(HelioVector(...))`, and populate `data/planets.ts` with the 8 planets (equatorial diameters, colors, orbit ranks). Write `astro/positions.test.ts` (ephemeris spot-check + frame-bug regression guard). Commit: `feat: compute heliocentric positions + orbit samples via astronomy-engine`.
 
-**Local-only working state (NEVER commit):** none yet
+**Local-only working state (NEVER commit):** none. (`.claude/launch.json` committed — dev server config; `node_modules/` + `dist/` gitignored.)
 
 **Quickstart for next session:**
 1. Read this file top-to-bottom.
-2. `git status` to confirm repo state.
-3. Begin Phase 1 — everything is decided; go straight to `pnpm create vite`.
+2. `git status` (clean) + `git log --oneline` (tip = `ec6a1df` scaffold).
+3. `pnpm install` if node_modules missing, then start Phase 2.
+4. Dev server: `pnpm dev` (or preview_start `planets-now-dev`, port 5173). Verify commands: `pnpm test`, `pnpm build`.
 
 **Gotchas / rejected approaches (why the current design is what it is):**
 - **No live API for positions — decided against, by design.** JPL Horizons has **no CORS headers** (verified 2026-07-24 via `curl -H "Origin: ..."`) so it's not browser-callable; astronomyapi.com needs a secret key (unsafe from a browser); le-systeme-solaire.net now returns `401` without a key. Instead positions are computed **client-side** with the `astronomy-engine` library (VSOP87-based, exact to the second). User confirmed: the spirit of "real current positions from an authoritative source" is satisfied by an authoritative *computation library*, not a literal network API call. This removes all backend/CORS/secret/GitHub-Action-precompute complexity — the app is 100% static.
@@ -55,6 +56,7 @@ Review fixes and bug fixes land as `git commit --fixup=<sha>` against the origin
 
 - 2026-07-24 (planning) — Plan authored from text description; grilling resolved all 12 design decisions. No blocking unknowns.
 - 2026-07-27 (pre-investigation) — Verified `astronomy-engine` v2.1.19 API against its `astronomy.d.ts`. **Found + fixed a load-bearing frame bug in the plan:** `HelioVector` returns J2000 *equatorial* (not ecliptic) coords — must convert via `Ecliptic()`. Also: flagged `EclipticLongitude()` as a geocentric trap, added orbit-sampling span strategy (elon-wrap), Vite-HMR timer cleanup, equatorial-diameter basis for the Jupiter/Earth test, and confirmed `create vite` "Ignore files and continue" for the non-empty dir. Plan edits applied.
+- 2026-07-28 (Phase 1 scaffold) — Scaffolded Vite 8 + TS 6 (vanilla-ts) + Vitest via temp-subdir-then-move (non-interactive). Added `astronomy-engine@2.1.19`. Created module skeleton (`data/planets.ts`, `astro/positions.ts`, `render/scale.ts`, `render/scene.ts`, `main.ts`) with Phase 2+ fns stubbed; `main.ts` mounts a blank dark full-viewport `<svg id="scene">`. Smoke test in `data/planets.test.ts`. **All ACs verified:** blank dark SVG renders in browser (bg `#05070d`, no console errors), `pnpm test` (1 passed), `pnpm build` + `tsc` green. Node 22.17 / pnpm 10.28 (esbuild postinstall blocked by pnpm but build works). Commit `ec6a1df` — local, NOT pushed. Next: Phase 2 positions.
 
 ## Decisions (locked via grilling 2026-07-24)
 
@@ -141,7 +143,7 @@ Single new repo: `planets-now` (this directory), freshly `git init`'d, no remote
 - [ ] **Toggle invariant** holds: switching modes never changes a planet's angular position — pure radial/size re-scale. (Unit-tested.)
 - [ ] Sun always size-capped + labeled "not to scale" in realistic mode.
 - [ ] Scale-transform + position math unit-tested (Vitest) and green on every commit.
-- [ ] `pnpm build` + `tsc` clean on every commit.
+- [x] `pnpm build` + `tsc` clean on every commit. (Phase 1: green.)
 - [ ] No push without user "push" confirmation.
 - [ ] Review fixes land as fixups, not standalone `fix:` commits.
 
@@ -152,7 +154,7 @@ Single new repo: `planets-now` (this directory), freshly `git init`'d, no remote
 - **Branch:** work directly on `main` initially (solo personal project, no review pipeline). Revisit if user wants feature branches.
 - **Base:** N/A — no remote, no commits yet.
 - **Commits planned (conventional, atomic):**
-  1. `chore: scaffold vite + typescript project`
+  1. `chore: scaffold vite + typescript project` — **(done, `ec6a1df`, local)**
   2. `feat: compute heliocentric positions + orbit samples via astronomy-engine`
   3. `feat: render live stylized solar system (SVG)`
   4. `feat: add realistic-scale layout mode + toggle`
