@@ -24,19 +24,20 @@ Review fixes and bug fixes land as `git commit --fixup=<sha>` against the origin
 
 ## Status
 
-**Project state:** Phase 1 done (2026-07-28). Vite 8 + TS 6 + Vitest scaffolded, `astronomy-engine` installed, blank dark SVG scene renders, module skeleton in place. 1 commit local (`ec6a1df`), not pushed, no remote yet.
+**Project state:** Phase 2 done (2026-07-28). Positions + orbit sampling implemented & unit-tested (8 tests green); 8 planets vendored in `data/planets.ts`. **Repo pushed to GitHub (public): https://github.com/bezdonas/planets-now** — `main` tracks `origin/main`. Positions logic exists but is NOT yet rendered (that's Phase 3 — `main.ts`/scene still show only the blank dark SVG).
 
-**Current session focus:** Phase 1 complete — scaffold + blank scene committed.
+**Current session focus:** Phase 2 complete — positions/orbits + data + tests committed & pushed.
 
-**Next session focus:** Phase 2 — implement `astro/positions.ts` (`getHeliocentricPositions`, `sampleOrbit`) via `Ecliptic(HelioVector(...))`, and populate `data/planets.ts` with the 8 planets (equatorial diameters, colors, orbit ranks). Write `astro/positions.test.ts` (ephemeris spot-check + frame-bug regression guard). Commit: `feat: compute heliocentric positions + orbit samples via astronomy-engine`.
+**Next session focus:** Phase 3 — implement `render/scale.ts` `stylizedLayout` (even/eased orbit radii by `orbitRank`, size ranks), draw Sun (capped) + 8 planets at real angles / stylized radii + orbit ellipse paths (from `sampleOrbit`) + always-on labels in `render/scene.ts`; add the 60s position tick + 1s clock in `main.ts` with `import.meta.hot?.dispose()` timer cleanup. Wire `getHeliocentricPositions`/`sampleOrbit` into the scene. Tests in `render/scale.test.ts` (monotonic radii, no overlap, angle preserved). Commit: `feat: render live stylized solar system (SVG)`.
 
 **Local-only working state (NEVER commit):** none. (`.claude/launch.json` committed — dev server config; `node_modules/` + `dist/` gitignored.)
 
 **Quickstart for next session:**
 1. Read this file top-to-bottom.
-2. `git status` (clean) + `git log --oneline` (tip = `ec6a1df` scaffold).
-3. `pnpm install` if node_modules missing, then start Phase 2.
+2. `git status` (clean) + `git log --oneline` (tip = `cce750c` Phase 2). `git fetch` — `main` = `origin/main`.
+3. `pnpm install` if node_modules missing, then start Phase 3.
 4. Dev server: `pnpm dev` (or preview_start `planets-now-dev`, port 5173). Verify commands: `pnpm test`, `pnpm build`.
+5. Reuse: `getHeliocentricPositions(date)` → `{body, angleRad, distanceAU}[]`; `sampleOrbit(body)` → ecliptic-plane `{x,y}[]` (AU) closed loop.
 
 **Gotchas / rejected approaches (why the current design is what it is):**
 - **No live API for positions — decided against, by design.** JPL Horizons has **no CORS headers** (verified 2026-07-24 via `curl -H "Origin: ..."`) so it's not browser-callable; astronomyapi.com needs a secret key (unsafe from a browser); le-systeme-solaire.net now returns `401` without a key. Instead positions are computed **client-side** with the `astronomy-engine` library (VSOP87-based, exact to the second). User confirmed: the spirit of "real current positions from an authoritative source" is satisfied by an authoritative *computation library*, not a literal network API call. This removes all backend/CORS/secret/GitHub-Action-precompute complexity — the app is 100% static.
@@ -49,14 +50,15 @@ Review fixes and bug fixes land as `git commit --fixup=<sha>` against the origin
   // distance = eq.Length()   (AU)          — frame-invariant; or HelioDistance(body,date) (:1024)
   ```
   `date: FlexibleDateTime = Date | number | AstroTime` (`astronomy.d.ts:29`) — pass `new Date()` directly, no wrapping.
-- **⚠️ Do NOT use `EclipticLongitude(body, date)` (`astronomy.d.ts:1358`)** — it's the standard *geocentric apparent* ecliptic longitude, not heliocentric. For planet-around-Sun angle, always use `Ecliptic(HelioVector(...)).elon`.
+- **`EclipticLongitude(body, date)` (`astronomy.d.ts:1358`) is HELIOCENTRIC** — corrected 2026-07-28 (the pre-investigation note calling it "geocentric apparent" was WRONG; the test suite surfaced it — calling it on `Body.Sun` throws "Cannot calculate heliocentric longitude of the Sun"). Doc: "heliocentric ecliptic longitude of a body … as seen from the center of the Sun." So it's a valid one-call alternative to `Ecliptic(HelioVector(...)).elon` for the angle. We still use `Ecliptic(HelioVector())` in `positions.ts` because it also yields the ecliptic cartesian (for orbit sampling) + distance; `EclipticLongitude` is used in the test as an independent cross-check oracle.
 - **Earth is a normal body here:** `HelioVector(Body.Earth)` works — no special-casing (unlike geocentric APIs where Earth is the origin).
 
 ### Session log
 
 - 2026-07-24 (planning) — Plan authored from text description; grilling resolved all 12 design decisions. No blocking unknowns.
 - 2026-07-27 (pre-investigation) — Verified `astronomy-engine` v2.1.19 API against its `astronomy.d.ts`. **Found + fixed a load-bearing frame bug in the plan:** `HelioVector` returns J2000 *equatorial* (not ecliptic) coords — must convert via `Ecliptic()`. Also: flagged `EclipticLongitude()` as a geocentric trap, added orbit-sampling span strategy (elon-wrap), Vite-HMR timer cleanup, equatorial-diameter basis for the Jupiter/Earth test, and confirmed `create vite` "Ignore files and continue" for the non-empty dir. Plan edits applied.
-- 2026-07-28 (Phase 1 scaffold) — Scaffolded Vite 8 + TS 6 (vanilla-ts) + Vitest via temp-subdir-then-move (non-interactive). Added `astronomy-engine@2.1.19`. Created module skeleton (`data/planets.ts`, `astro/positions.ts`, `render/scale.ts`, `render/scene.ts`, `main.ts`) with Phase 2+ fns stubbed; `main.ts` mounts a blank dark full-viewport `<svg id="scene">`. Smoke test in `data/planets.test.ts`. **All ACs verified:** blank dark SVG renders in browser (bg `#05070d`, no console errors), `pnpm test` (1 passed), `pnpm build` + `tsc` green. Node 22.17 / pnpm 10.28 (esbuild postinstall blocked by pnpm but build works). Commit `ec6a1df` — local, NOT pushed. Next: Phase 2 positions.
+- 2026-07-28 (Phase 1 scaffold) — Scaffolded Vite 8 + TS 6 (vanilla-ts) + Vitest via temp-subdir-then-move (non-interactive). Added `astronomy-engine@2.1.19`. Created module skeleton (`data/planets.ts`, `astro/positions.ts`, `render/scale.ts`, `render/scene.ts`, `main.ts`) with Phase 2+ fns stubbed; `main.ts` mounts a blank dark full-viewport `<svg id="scene">`. Smoke test in `data/planets.test.ts`. **All ACs verified:** blank dark SVG renders in browser (bg `#05070d`, no console errors), `pnpm test` (1 passed), `pnpm build` + `tsc` green. Node 22.17 / pnpm 10.28 (esbuild postinstall blocked by pnpm but build works). Commit `ec6a1df`. Next: Phase 2 positions.
+- 2026-07-28 (push + Phase 2) — Created public GitHub repo `bezdonas/planets-now` (gh, `repo`+`workflow` scopes) and pushed `main` (scaffold `ec6a1df` + plan `c53b132`). Then Phase 2: vendored the 8 planets in `data/planets.ts` (equatorial diameters, colors, ranks + `SUN_DIAMETER_KM`); implemented `getHeliocentricPositions` (via `Ecliptic(HelioVector())`, ecliptic frame) + `sampleOrbit` (adaptive elon-wrap, no period constant). **Corrected a plan error:** `EclipticLongitude` is *heliocentric*, not geocentric (test surfaced it — Sun throws); now used as the test's independent oracle. 8 tests green (angle cross-check, frame-bug guard @0.5° gap, distance bands, loop closure); `pnpm build`+`tsc` green. Commit `cce750c`. NOT yet rendered — Phase 3 wires positions into the scene.
 
 ## Decisions (locked via grilling 2026-07-24)
 
@@ -138,8 +140,8 @@ Single new repo: `planets-now` (this directory), freshly `git init`'d, no remote
 
 ## Cross-cutting checklist
 
-- [ ] No network calls for positions — everything from `astronomy-engine` in-browser.
-- [ ] Static physical constants vendored locally, not fetched.
+- [x] No network calls for positions — everything from `astronomy-engine` in-browser. (Phase 2.)
+- [x] Static physical constants vendored locally, not fetched. (Phase 2: `data/planets.ts`.)
 - [ ] **Toggle invariant** holds: switching modes never changes a planet's angular position — pure radial/size re-scale. (Unit-tested.)
 - [ ] Sun always size-capped + labeled "not to scale" in realistic mode.
 - [ ] Scale-transform + position math unit-tested (Vitest) and green on every commit.
@@ -154,13 +156,13 @@ Single new repo: `planets-now` (this directory), freshly `git init`'d, no remote
 - **Branch:** work directly on `main` initially (solo personal project, no review pipeline). Revisit if user wants feature branches.
 - **Base:** N/A — no remote, no commits yet.
 - **Commits planned (conventional, atomic):**
-  1. `chore: scaffold vite + typescript project` — **(done, `ec6a1df`, local)**
-  2. `feat: compute heliocentric positions + orbit samples via astronomy-engine`
+  1. `chore: scaffold vite + typescript project` — **(done, `ec6a1df`, pushed)**
+  2. `feat: compute heliocentric positions + orbit samples via astronomy-engine` — **(done, `cce750c`, pushed)**
   3. `feat: render live stylized solar system (SVG)`
   4. `feat: add realistic-scale layout mode + toggle`
   5. `feat: planet hover tooltips`
   6. `chore: github pages deploy`
-- **Remote/hosting:** personal GitHub + GitHub Pages. Create repo + push only after explicit "push" confirmation (push policy).
+- **Remote/hosting:** **https://github.com/bezdonas/planets-now** (public, created + pushed 2026-07-28). GitHub Pages deploy still pending (Phase 5).
 
 ## Open questions (non-blocking, for follow-up)
 
