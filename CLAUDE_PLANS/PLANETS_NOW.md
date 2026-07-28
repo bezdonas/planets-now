@@ -26,7 +26,7 @@ Review fixes and bug fixes land as `git commit --fixup=<sha>` against the origin
 
 **Project state:** Phase 3 done (2026-07-28). Live **stylized** scene renders: Sun (capped) + 8 planets at real angles on evenly-spaced orbit rings, graded disc sizes, always-on labels, 60s position tick + 1s clock HUD. Verified in-browser (Earth heliocentric longitude ~305.6° for 2026-07-28 — matches reality). 14 tests green. Commit `0c86656` local, **NOT pushed** (Phase 1–2 are on `origin/main` at `a939d2c`). Repo: https://github.com/bezdonas/planets-now.
 
-**Current session focus:** Phase 3 complete — stylized render + tick committed (local).
+**Current session focus:** Phase 3 complete — stylized render + tick committed & pushed (`origin/main` = `33c779f`).
 
 **Next session focus:** Phase 4 — realistic mode + toggle. Implement `realisticLayout` in `render/scale.ts` (log-scale distances from `distanceAU`; planet disc sizes true-to-proportion among planets via real `diameterKm`; Sun size-capped separately — use `SUN_DIAMETER_KM`). Draw **real-ellipse orbits via `sampleOrbit(body)`** in realistic mode (stylized keeps concentric circles — see refinement note under Decisions #8). Add the stylized⇄realistic toggle UI (button in the HUD) + "Sun not to scale" caveat shown in realistic mode. `render/scale.test.ts`: size ratios match real diameters (Jupiter/Earth ≈ 11.2, equatorial basis, ±0.1); distance ordering preserved; **toggle invariant** — same input angle → same output polar angle in both layouts. Commit: `feat: add realistic-scale layout mode + toggle`.
 
@@ -34,7 +34,7 @@ Review fixes and bug fixes land as `git commit --fixup=<sha>` against the origin
 
 **Quickstart for next session:**
 1. Read this file top-to-bottom.
-2. `git status` (clean) + `git log --oneline` (tip = `0c86656` Phase 3; `origin/main` = `a939d2c`, i.e. Phase 3 is ahead-by-1 unpushed).
+2. `git status` (clean) + `git log --oneline` (tip = `0c86656` Phase 3; pushed — `origin/main` in sync).
 3. `pnpm install` if node_modules missing, then start Phase 4.
 4. Dev server: `pnpm dev` (or preview_start `planets-now-dev`, port 5173). Verify: `pnpm test`, `pnpm build`.
 5. Reuse: `getHeliocentricPositions(date)` → `{body, angleRad, distanceAU}[]`; `sampleOrbit(body)` → ecliptic-plane `{x,y}[]` (AU) closed loop; `render/scene.ts` `createScene(mount)` → `{svg, render(date)}` (currently stylized-only — Phase 4 adds a mode param).
@@ -59,7 +59,7 @@ Review fixes and bug fixes land as `git commit --fixup=<sha>` against the origin
 - 2026-07-27 (pre-investigation) — Verified `astronomy-engine` v2.1.19 API against its `astronomy.d.ts`. **Found + fixed a load-bearing frame bug in the plan:** `HelioVector` returns J2000 *equatorial* (not ecliptic) coords — must convert via `Ecliptic()`. Also: flagged `EclipticLongitude()` as a geocentric trap, added orbit-sampling span strategy (elon-wrap), Vite-HMR timer cleanup, equatorial-diameter basis for the Jupiter/Earth test, and confirmed `create vite` "Ignore files and continue" for the non-empty dir. Plan edits applied.
 - 2026-07-28 (Phase 1 scaffold) — Scaffolded Vite 8 + TS 6 (vanilla-ts) + Vitest via temp-subdir-then-move (non-interactive). Added `astronomy-engine@2.1.19`. Created module skeleton (`data/planets.ts`, `astro/positions.ts`, `render/scale.ts`, `render/scene.ts`, `main.ts`) with Phase 2+ fns stubbed; `main.ts` mounts a blank dark full-viewport `<svg id="scene">`. Smoke test in `data/planets.test.ts`. **All ACs verified:** blank dark SVG renders in browser (bg `#05070d`, no console errors), `pnpm test` (1 passed), `pnpm build` + `tsc` green. Node 22.17 / pnpm 10.28 (esbuild postinstall blocked by pnpm but build works). Commit `ec6a1df`. Next: Phase 2 positions.
 - 2026-07-28 (push + Phase 2) — Created public GitHub repo `bezdonas/planets-now` (gh, `repo`+`workflow` scopes) and pushed `main` (scaffold `ec6a1df` + plan `c53b132`). Then Phase 2: vendored the 8 planets in `data/planets.ts` (equatorial diameters, colors, ranks + `SUN_DIAMETER_KM`); implemented `getHeliocentricPositions` (via `Ecliptic(HelioVector())`, ecliptic frame) + `sampleOrbit` (adaptive elon-wrap, no period constant). **Corrected a plan error:** `EclipticLongitude` is *heliocentric*, not geocentric (test surfaced it — Sun throws); now used as the test's independent oracle. 8 tests green (angle cross-check, frame-bug guard @0.5° gap, distance bands, loop closure); `pnpm build`+`tsc` green. Commit `cce750c` (pushed `a939d2c`).
-- 2026-07-28 (Phase 3 stylized render) — `scale.ts` `stylizedLayout` (even orbit radius by rank, graded log-of-diameter disc; angle preserved exactly). `scene.ts` builds static orbit rings + Sun once, repositions planet discs/labels on `render(date)`. `main.ts` 60s position tick + 1s clock HUD, timers cleared via `import.meta.hot.dispose`. **Refinement:** stylized orbits are concentric CIRCLES (even spacing for legibility); sampled real-ellipse orbits deferred to realistic mode — decision #8 clarified. 6 new scale tests (monotonic radii, no-overlap, in-viewport, angle-preserved, on-ring); 14 total green. **In-browser verified:** all 9 bodies + labels + clock render, no console errors, Earth longitude ~305.6° matches real 2026-07-28 config. Commit `0c86656` — local, NOT pushed. Next: Phase 4 realistic + toggle.
+- 2026-07-28 (Phase 3 stylized render) — `scale.ts` `stylizedLayout` (even orbit radius by rank, graded log-of-diameter disc; angle preserved exactly). `scene.ts` builds static orbit rings + Sun once, repositions planet discs/labels on `render(date)`. `main.ts` 60s position tick + 1s clock HUD, timers cleared via `import.meta.hot.dispose`. **Refinement:** stylized orbits are concentric CIRCLES (even spacing for legibility); sampled real-ellipse orbits deferred to realistic mode — decision #8 clarified. 6 new scale tests (monotonic radii, no-overlap, in-viewport, angle-preserved, on-ring); 14 total green. **In-browser verified:** all 9 bodies + labels + clock render, no console errors, Earth longitude ~305.6° matches real 2026-07-28 config. Commit `0c86656` (pushed `33c779f`). Next: Phase 4 realistic + toggle.
 
 ## Decisions (locked via grilling 2026-07-24)
 
@@ -159,7 +159,7 @@ Single new repo: `planets-now` (this directory), freshly `git init`'d, no remote
 - **Commits planned (conventional, atomic):**
   1. `chore: scaffold vite + typescript project` — **(done, `ec6a1df`, pushed)**
   2. `feat: compute heliocentric positions + orbit samples via astronomy-engine` — **(done, `cce750c`, pushed)**
-  3. `feat: render live stylized solar system (SVG)` — **(done, `0c86656`, local — unpushed)**
+  3. `feat: render live stylized solar system (SVG)` — **(done, `0c86656`, pushed)**
   4. `feat: add realistic-scale layout mode + toggle`
   5. `feat: planet hover tooltips`
   6. `chore: github pages deploy`
