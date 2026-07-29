@@ -1,11 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  PLANET_R_MAX,
-  planetDisplayRadius,
-  stylizedLayout,
-  stylizedOrbitRadius,
-  VIEW,
-} from "./scale.ts";
+import { PLANET_R_MAX, planetDisplayRadius, stylizedLayout, stylizedOrbitRadius, VIEW } from "./scale.ts";
 
 const maxPlanetR = PLANET_R_MAX;
 
@@ -40,10 +34,10 @@ describe("planetDisplayRadius", () => {
   });
 });
 
-describe("stylizedLayout — toggle invariant", () => {
+describe("stylizedLayout", () => {
   it("preserves the input angle exactly (atan2(-cy, cx) === angleRad)", () => {
     for (const angleRad of [0, 0.5, 1.7, Math.PI, 4.2, 6.0]) {
-      const { cx, cy } = stylizedLayout({ angleRad, distanceAU: 1, diameterKm: 12756, orbitRank: 3 });
+      const { cx, cy } = stylizedLayout({ angleRad, diameterKm: 12756, orbitRank: 3 });
       const recovered = Math.atan2(-cy, cx);
       const norm = (recovered + 2 * Math.PI) % (2 * Math.PI);
       expect(norm).toBeCloseTo(angleRad, 6);
@@ -51,7 +45,7 @@ describe("stylizedLayout — toggle invariant", () => {
   });
 
   it("places the body on its rank's orbit ring", () => {
-    const placed = stylizedLayout({ angleRad: 1.0, distanceAU: 5, diameterKm: 142984, orbitRank: 5 });
+    const placed = stylizedLayout({ angleRad: 1.0, diameterKm: 142984, orbitRank: 5 });
     const r = Math.hypot(placed.cx, placed.cy);
     expect(r).toBeCloseTo(stylizedOrbitRadius(5), 6);
   });

@@ -38,6 +38,9 @@ body {
   fill: none;
   stroke: var(--orbit);
   stroke-width: 1;
+  /* Keep orbit lines a constant ~1px on screen at any zoom (they'd otherwise
+     shrink to invisible sub-pixel hairlines when zoomed far out). */
+  vector-effect: non-scaling-stroke;
 }
 
 .sun-disc {
@@ -64,13 +67,110 @@ body {
   font-size: 12px;
 }
 
+.hit {
+  fill: transparent;
+  cursor: pointer;
+}
+
+.tooltip {
+  position: fixed;
+  z-index: 10;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-width: 260px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--orbit);
+  background: rgba(12, 16, 26, 0.95);
+  color: var(--fg);
+  font-size: 12px;
+  line-height: 1.35;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+}
+
+.tooltip[hidden] {
+  display: none;
+}
+
+.tooltip strong {
+  font-size: 13px;
+}
+
+.tooltip span {
+  color: var(--muted);
+}
+
 #hud {
   position: fixed;
   top: 14px;
   left: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
   color: var(--muted);
   font-variant-numeric: tabular-nums;
   font-size: 13px;
   letter-spacing: 0.02em;
   user-select: none;
+}
+
+.hud-toggle {
+  appearance: none;
+  cursor: pointer;
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--orbit);
+  background: rgba(230, 233, 240, 0.04);
+  color: var(--fg);
+  font: inherit;
+  letter-spacing: 0.01em;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.hud-toggle:hover {
+  background: rgba(230, 233, 240, 0.1);
+  border-color: var(--muted);
+}
+
+.hud-notes {
+  max-width: 320px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--orbit);
+  background: rgba(12, 16, 26, 0.9);
+}
+
+.hud-notes[hidden] {
+  display: none;
+}
+
+.hud-notes ul {
+  margin: 0;
+  padding-left: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.hud-notes li {
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--muted);
+}
+
+/* Small screens: the SVG viewBox already scales; trim chrome + label size. */
+@media (max-width: 640px) {
+  #hud {
+    top: 10px;
+    left: 12px;
+    gap: 6px;
+    font-size: 12px;
+  }
+
+  .label {
+    font-size: 16px; /* viewBox units — the scene shrinks, so labels need to grow */
+  }
 }

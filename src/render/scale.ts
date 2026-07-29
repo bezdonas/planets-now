@@ -1,8 +1,5 @@
 import { PLANETS } from "../data/planets.ts";
 
-/** Scale-mode selector. Toggle changes ONLY radial scale + body sizes. */
-export type ScaleMode = "stylized" | "realistic";
-
 /** A body placed in the scene's logical (viewBox) coordinate space. */
 export interface PlacedBody {
   /** center x (viewBox units) */
@@ -13,15 +10,13 @@ export interface PlacedBody {
   r: number;
 }
 
-/** Per-body inputs a layout needs. */
+/** Per-body inputs the layout needs. */
 export interface LayoutInput {
-  /** heliocentric ecliptic longitude (rad) — preserved by BOTH modes */
+  /** heliocentric ecliptic longitude (rad) — the one true quantity */
   angleRad: number;
-  /** true Sun–body distance (AU) — used by realistic mode */
-  distanceAU: number;
   /** real equatorial diameter (km) — drives disc size */
   diameterKm: number;
-  /** 1-based orbit index from the Sun — drives stylized orbit radius */
+  /** 1-based orbit index from the Sun — drives orbit radius */
   orbitRank: number;
 }
 
@@ -31,10 +26,10 @@ export interface LayoutInput {
  */
 export const VIEW = 500;
 
-/** Sun disc radius — capped, NOT to scale (see plan decision #5). */
+/** Sun disc radius — capped, NOT to scale (the real Sun is ~109× Earth). */
 export const SUN_CAP_R = 24;
 
-// Stylized-mode tuning: even concentric orbits, graded (not real) disc sizes.
+// Stylized tuning: even concentric orbits, graded (not real) disc sizes.
 const STYLIZED_R_INNER = 90; // Mercury ring
 const STYLIZED_R_OUTER = 430; // Neptune ring (leaves margin for labels < VIEW)
 export const PLANET_R_MIN = 6;
@@ -49,7 +44,7 @@ function polar(angleRad: number, radius: number): { cx: number; cy: number } {
   return { cx: radius * Math.cos(angleRad), cy: -radius * Math.sin(angleRad) };
 }
 
-/** Even-spaced stylized orbit radius for a 1-based orbit rank. Strictly increasing. */
+/** Even-spaced orbit radius for a 1-based orbit rank. Strictly increasing. */
 export function stylizedOrbitRadius(orbitRank: number): number {
   const t = (orbitRank - 1) / (RANK_COUNT - 1);
   return STYLIZED_R_INNER + t * (STYLIZED_R_OUTER - STYLIZED_R_INNER);
@@ -63,7 +58,8 @@ export function planetDisplayRadius(diameterKm: number): number {
 
 /**
  * Stylized layout: real angle, evenly-spaced orbit radius by rank, graded disc.
- * Angle is preserved exactly — atan2(-cy, cx) === angleRad (toggle invariant).
+ * The angle is the one thing kept true — atan2(-cy, cx) === angleRad. Orbit
+ * spacing and disc sizes are deliberately not to scale (see the in-app notes).
  */
 export function stylizedLayout(input: LayoutInput): PlacedBody {
   const radius = stylizedOrbitRadius(input.orbitRank);

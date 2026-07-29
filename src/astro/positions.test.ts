@@ -1,6 +1,6 @@
 import { Body, Ecliptic, EclipticLongitude, HelioVector, MakeTime } from "astronomy-engine";
 import { describe, expect, it } from "vitest";
-import { getHeliocentricPositions, sampleOrbit } from "./positions.ts";
+import { getHeliocentricPositions } from "./positions.ts";
 
 const RAD2DEG = 180 / Math.PI;
 const J2000 = new Date("2000-01-01T12:00:00Z");
@@ -58,30 +58,5 @@ describe("getHeliocentricPositions", () => {
 
     // Our output matches the ecliptic frame, NOT the equatorial one.
     expect(produced).toBeCloseTo(eclipticLon, 1);
-  });
-});
-
-describe("sampleOrbit", () => {
-  it("returns a closed loop of ~samples points for each planet", () => {
-    for (const body of [Body.Mercury, Body.Earth, Body.Mars, Body.Neptune]) {
-      const pts = sampleOrbit(body, 128);
-      expect(pts.length).toBeGreaterThan(100);
-      expect(pts.length).toBeLessThan(200);
-
-      const first = pts[0];
-      const last = pts[pts.length - 1];
-      const gap = Math.hypot(last.x - first.x, last.y - first.y);
-      const radius = Math.hypot(first.x, first.y);
-      // Loop closes: end returns near the start (within 5% of orbital radius).
-      expect(gap, `${body} loop closure`).toBeLessThan(radius * 0.05);
-    }
-  });
-
-  it("samples Mercury's orbit within its known distance band", () => {
-    for (const { x, y } of sampleOrbit(Body.Mercury, 64)) {
-      const r = Math.hypot(x, y);
-      expect(r).toBeGreaterThan(0.30);
-      expect(r).toBeLessThan(0.47);
-    }
   });
 });
