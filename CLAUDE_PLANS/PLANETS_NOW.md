@@ -24,11 +24,11 @@ Review fixes and bug fixes land as `git commit --fixup=<sha>` against the origin
 
 ## Status
 
-**Project state:** **Single-mode app (realistic mode DROPPED 2026-07-28 per user).** After iterating realistic mode to fully-to-scale + zoom, user decided to drop it entirely. Now: **one stylized view** over real current positions (even orbit circles, graded sizes, capped Sun, real angles), always-on labels, per-planet hover tooltips, scroll-to-zoom, 60s tick + 1s clock, responsive — **plus a "What's simplified?" HUD panel** listing every simplification (see decision #14). 12 tests green, `build`+`tsc` clean, no console errors. Local commits through `e034105`, **NOT pushed** (`origin/main` = `b2c9087`, ahead-by-many). Repo: https://github.com/bezdonas/planets-now.
+**Project state:** ✅ **Shipped to `origin/main` with clean history (2026-07-28).** Single **stylized view** over real current positions (even orbit circles, graded sizes, capped Sun, real angles), always-on labels, per-planet hover tooltips, scroll-to-zoom, always-visible orbit rings, 60s tick + 1s clock, responsive, + a "What's simplified?" HUD panel (decision #14). The 13 messy post-v1 realistic-iteration commits were squashed (soft-reset to `origin/main`, verified tree-identical) into **3 clean commits** — `53ec541` (tooltips/zoom/notes), `b60295c` (pages deploy), `1926887` (plan). `origin/main` = `1926887`. 12 tests green, build+tsc clean. Repo: https://github.com/bezdonas/planets-now. **Only release step left: one-time enable GitHub Pages** (Settings → Pages → Source = "GitHub Actions").
 
-**Current session focus:** **Realistic mode dropped** — single stylized view + "What's simplified?" notes panel. Removed all realistic layout/scale/orbit-sampling code + tests; kept scroll-to-zoom + non-scaling-stroke orbits as general nav. Commit `e034105` local.
+**Current session focus:** Cleaned history (squashed 13 → 3 commits, tree-verified identical) and pushed to `origin/main`.
 
-**Next session focus:** Release — **push** the (many) local commits, then **one-time enable GitHub Pages** (Settings → Pages → Source = "GitHub Actions", or `gh api -X POST repos/bezdonas/planets-now/pages -f build_type=workflow`) → https://bezdonas.github.io/planets-now/. Optional: prune the now-heavy commit history (many post-v1 design-iteration commits) via interactive rebase before push if a clean history is wanted — ask user.
+**Next session focus:** **One-time enable GitHub Pages** (Settings → Pages → Source = "GitHub Actions", or `gh api -X POST repos/bezdonas/planets-now/pages -f build_type=workflow`) so the already-pushed deploy workflow publishes → https://bezdonas.github.io/planets-now/. Then done. Optional follow-ups (Open questions): Moon, Pluto, click-details, time scrubbing.
 
 **Local-only working state (NEVER commit):** none. (`.claude/launch.json` committed — dev server config; `node_modules/` + `dist/` gitignored.)
 
@@ -65,6 +65,7 @@ Review fixes and bug fixes land as `git commit --fixup=<sha>` against the origin
 - 2026-07-28 (realistic → true linear distances) — Per user "make realistic really realistic": switched realistic mode from log-scaled to **true linear** distance (`realisticOrbitRadius` now ∝ AU; orbits become geometrically true ellipses via a uniform scale). Showed the linear result live first (inner 4 planets crowd at the Sun, big empty outer rings) — user chose to keep it and evaluate. Caveat → "True distances · Sun not to scale". Two modes only, no zoom/pan. Sizes/Sun-cap/toggle-invariant unchanged; test renamed to assert linear proportionality; 18 green, build+tsc green, no console errors. Commit `c660446` — local, NOT pushed. Decision #4 revised in-plan.
 - 2026-07-28 (realistic → FULLY to scale, uncap Sun) — Per user "по полной, всё реалистично, мне похер что выглядит хреново": unified onto **one scale** (`REALISTIC_UNITS_PER_KM`) for distances + sizes + Sun; removed the Sun cap in realistic (`scene.ts` sets Sun radius per mode); renamed `realisticPlanetRadius`→`realisticBodyRadius` (now true radius = km/2 × scale). Explained why inner planets had merged (capped Sun huge vs true tiny distances + separate size scale). Result: all bodies sub-pixel (Sun 0.066, Jupiter 0.0068, Earth 0.0006 units) — only orbit rings + labels + hover visible; verified in-browser + no console errors. New test asserts distance & size share one scale; 19 green, build+tsc green. Caveat → "Fully to scale — bodies are sub-pixel dots". Commit `246b604` — local, NOT pushed. Decisions #4/#5 revised.
 - 2026-07-28 (realistic scale bump to ~1px + scroll-to-zoom) — Per user "увелич масштаб чтобы самое маленькое тело было пикселем и добавь зум на скролл": pinned `REALISTIC_UNITS_PER_KM` via `MIN_BODY_RADIUS_UNITS=0.6` so Mercury ≈ 0.6u (~1px) at default zoom (system now enormous — Mercury orbit ~14k units, Neptune ~1.1M, Sun disc ~171u). Added wheel zoom in `scene.ts` (viewBox scaled toward cursor via `getScreenCTM`, clamp [0.5, 3e6], reset on mode switch). Then per "хочу чтоб орбиты были всё равно видны": `.orbit { vector-effect: non-scaling-stroke }` so rings stay ~1px and visible at any zoom. Verified: default shows big Sun; zoom out → Sun shrinks to a dot, orbit rings stay crisp (inner cluster + Jupiter/Saturn). 20 tests green, build+tsc clean, no console errors. Commits `3754478` (scale+zoom) + `8983865` (orbits) — local, NOT pushed. Decision #4/#5 + new #13.
+- 2026-07-28 (clean history + push) — User: "clean history and push". The 13 unpushed post-v1 commits (realistic added → revised 4× → dropped, entangled with keeper features) were squashed via `git reset --soft origin/main` + re-commit into 3 clean commits: `53ec541` feat (tooltips + scroll-to-zoom + notes panel + single stylized view), `b60295c` chore (pages deploy), `1926887` docs (plan). Verified `git diff 26e36ed HEAD` empty (tree identical), 12 tests + build green, then fast-forward pushed `b2c9087..1926887`. No force-push needed (rewrote only unpushed commits). Realistic-mode churn no longer appears in history. Only remaining step: enable Pages source.
 - 2026-07-28 (DROP realistic mode + simplification notes) — Per user "drop realistic mode. Add notes to default stylized mode about all simplifications": removed realistic mode + the mode toggle entirely (single stylized view). Deleted `realisticLayout`/`realisticBodyRadius`/`realisticOrbitRadius`/`realisticProjectAU`/`ScaleMode` from scale.ts, `sampleOrbit`/`OrbitPoint` from positions.ts, mode/setMode/data-mode/realistic-orbits from scene.ts, and their tests. Sun always capped now. Kept scroll-to-zoom (clamp tightened to [40,4000]) + non-scaling-stroke orbits. Added a HUD "What's simplified?" panel (`NOTES` in main.ts, 7 items) covering real-vs-simplified. Verified in-browser (panel lists all 7, no realistic leftovers, 8 orbits, no console errors); 12 tests green, build+tsc clean. Commit `e034105`. Decisions #4/#5/#8/#9/#13 marked dropped/updated, #14 added.
 
 ## Decisions (locked via grilling 2026-07-24)
@@ -164,19 +165,16 @@ Single new repo: `planets-now` (this directory), freshly `git init`'d, no remote
 
 - **Branch:** work directly on `main` initially (solo personal project, no review pipeline). Revisit if user wants feature branches.
 - **Base:** N/A — no remote, no commits yet.
-- **Commits planned (conventional, atomic):**
-  1. `chore: scaffold vite + typescript project` — **(done, `ec6a1df`, pushed)**
-  2. `feat: compute heliocentric positions + orbit samples via astronomy-engine` — **(done, `cce750c`, pushed)**
-  3. `feat: render live stylized solar system (SVG)` — **(done, `0c86656`, pushed)**
-  4. `feat: add realistic-scale layout mode + toggle` — **(done, `43e2f37`, local — unpushed)**
-  5. `feat: planet hover tooltips` — **(done, `945405f`, local — unpushed)**
-  6. `chore: github pages deploy` — **(done, `cd40fd8`, local — unpushed)**
-  7. `feat: use true (linear) distances in realistic mode` — **(done, `c660446`, local — unpushed; post-v1 revision per user)**
-  8. `feat: fully to-scale realistic mode (uncap Sun, single scale)` — **(done, `246b604`, local — unpushed; post-v1 revision per user)**
-  9. `feat: bump realistic scale to ~1px smallest body + scroll-to-zoom` — **(done, `3754478`, local — unpushed)**
-  10. `feat: keep orbit rings visible at any zoom (non-scaling stroke)` — **(done, `8983865`, local — unpushed)**
-  11. `feat: drop realistic mode; single stylized view + simplification notes` — **(done, `e034105`, local — unpushed; supersedes realistic work in 4/7/8/9)**
-- **Remote/hosting:** **https://github.com/bezdonas/planets-now** (public, created + pushed 2026-07-28). GitHub Pages deploy still pending (Phase 5).
+- **Actual pushed history on `origin/main`** (post history-cleanup — the messy realistic-iteration commits below the line were squashed away and no longer exist):
+  1. `chore: scaffold vite + typescript project` — `ec6a1df`
+  2. `feat: compute heliocentric positions + orbit samples via astronomy-engine` — `cce750c`
+  3. `feat: render live stylized solar system (SVG)` — `0c86656`
+  4. (plan-docs commits for phases 1–3) — through `b2c9087`
+  5. `feat: hover tooltips, scroll-to-zoom, and simplification notes` — `53ec541`
+  6. `chore: github pages deploy` — `b60295c`
+  7. `docs: update plan …` — `1926887`
+  - Squashed-away (never on remote): the realistic add/revise×4/drop churn (old SHAs `43e2f37`,`c660446`,`246b604`,`3754478`,`8983865`,`e034105` + their docs). Net effect folded into `53ec541`.
+- **Remote/hosting:** **https://github.com/bezdonas/planets-now** (public). `origin/main` = `1926887`. Pages deploy workflow is pushed; **needs one-time Settings → Pages → Source = "GitHub Actions"** to go live.
 
 ## Open questions (non-blocking, for follow-up)
 
