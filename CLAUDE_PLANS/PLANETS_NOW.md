@@ -28,7 +28,7 @@ Review fixes and bug fixes land as `git commit --fixup=<sha>` against the origin
 
 **Current session focus:** 🚀 **Deployed & live at https://bezdonas.github.io/planets-now/** — Pages enabled, workflow green, verified rendering in-browser.
 
-**Next session focus:** Nothing required — shipped. Optional follow-ups (Open questions): Moon, Pluto, click-details panel, time scrubbing; optionally bump Actions off the deprecated Node-20 warning.
+**Next session focus:** Nothing required — shipped & clean. Optional follow-ups (Open questions): Moon, Pluto, click-details panel, time scrubbing.
 
 **Local-only working state (NEVER commit):** none. (`.claude/launch.json` committed — dev server config; `node_modules/` + `dist/` gitignored.)
 
