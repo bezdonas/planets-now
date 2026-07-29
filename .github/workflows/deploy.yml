@@ -29,9 +29,6 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
       - uses: actions/configure-pages@v5
-        with:
-          # Enable Pages (Actions source) on first run so no manual repo setting is needed.
-          enablement: true
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
